@@ -1,0 +1,119 @@
+#!/bin/bash
+
+###################################################################
+# Script Name : RDP connection Tunneled vía SSH
+# date        : 20220822
+# usage       : bash rdpTunnelledCon [-s/-r] <remote_IP>
+# Author      : d1ch0t0my
+# Email       : d1ch0t0my@protonmail.com
+# Description : Script to connect via RDP, tunnelling the connection via
+#				SSH with RSA key pair authentication, to remote machine
+###################################################################
+
+echo -e "\n\e[1;39m### RDP VIA SSH ###\n\e[0;39m"
+
+# FLAGS VARIABLES
+
+# GLOBAL VARIABLES 
+ip=''
+port=3389									# <--- CHANGE THIS
+user=$(whoami)									# <--- CHANGE THIS
+key='~/.ssh/id_rsa'								# <--- CHANGE THIS
+geometri='1920x1045'							# <--- CHANGE THIS
+size='/size:'
+
+usage(){
+	echo -e "\e[1;39mUsage: \e[0;39mrdpTunnelledCon [OPTIONS] -i <RDP_SERVER_IP>"
+	echo -e "\n\e[1;39mOPTIONS:\e[0;39m\n"
+	echo -e "    -i:  IP of the remote machine we want to connect to (MANDATORY)."
+	echo -e "    -u:  Specifies a user for the connection (by default the username)."
+	echo -e "    -k:  Path to the private RSA key (by default the user id_rsa)."
+	echo -e "    -p:  Sets the port where the remote machine is waiting for the RDP connection."
+	echo -e "    -g:  Defines the geometry of the connection window (<width>x<height>)."
+}
+
+if [[ ${#} -eq 0 ]]; then
+   usage
+fi
+
+while getopts i:u:k:p:g: opt; do
+	case "${opt}" in
+		i)
+			if [[ ${OPTARG} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+				ip=${OPTARG}
+			else
+				echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: \" -i ${OPTARG}\" Is not a valid IP\n[\e[1;38;5;82m*\e[0;39m] End of Execution\n"
+				usage
+				exit
+			fi
+		 ;;
+		u)
+			user=${OPTARG}
+		 ;;
+		k)
+			key=${OPTARG}
+		 ;;
+		p)
+			port=${OPTARG}
+		 ;;
+		g)
+			geometri=${OPTARG}
+		 ;;
+		*)
+			usage; exit 1
+		 ;;
+	esac
+done
+
+if [[ $ip = '' ]]; then
+	echo -e "[\e[1;38;5;226m!\e[0;39m] Remote IP address not defined.\n[\e[1;38;5;82m*\e[0;39m] End of Execution\n"
+	usage
+	exit
+fi
+
+echo -e "[-] Setting up the SSH tunnel for RDP:"
+echo -e "[i] COMMAND: ssh -L \e[32m$port\e[0;39m:localhost:\e[32m$port\e[0;39m -N -f \e[32m$user\e[0;39m@\e[32m$ip\e[0;39m -i \e[32m$key\e[0;39m"
+if [[ $(ps aux | grep ssh | grep $port) != *"$port"* ]]; then
+	ssh -L $port:localhost:$port -N -f $user@$ip -i $key 2>/dev/null &
+	sleep 3
+	if [[ $(ps aux | grep ssh | grep $port) != *"$port"* ]]; then
+		echo -e "[\e[1;32m!\e[0;39m] Unable to establish SSH tunnel"
+		echo -e "[\e[1;31m!\e[0;39m] Execution ends"
+		exit
+	else
+		echo -e "[\e[1;32m*\e[0;39m] SSH tunnel established"
+	fi
+else
+	echo -e "[\e[1;34mi\e[0;39m] SSH tunnel already established"
+fi
+
+echo -e "\n[-] Establishing RDP Connection..."
+xfreerdp +nego +sec-rdp +sec-tls +sec-nla +clipboard /v:localhost:$port /u:$user $size$geometri 1>/dev/null 2>/dev/null &
+echo -e "[i] COMMAND: xfreerdp +nego +sec-rdp +sec-tls +sec-nla +clipboard /v:localhost:\e[32m$port\e[0;39m /u:\e[32m$user\e[0;39m /size:\e[32m$geometri\e[0;39m"
+
+sleep 3
+
+if [[ $(ps aux | grep xfreerdp) != *"xfreerdp"* ]]; then
+	echo -e "[\e[1;32m!\e[0;39m] Unable to stablish connection via RDP"
+	echo "[-] Killing SSH RDP tunnel process";
+	sudo kill -9 $(ps aux | grep ssh | grep $port | grep -v "color=auto" | awk -F ' ' '{print $2}');
+	echo -e "[\e[1;31m!\e[0;39m] Execution ends"
+else
+	echo -e "[\e[1;32m*\e[0;39m] Connection succeeded"
+fi
+
+echo
+while true; do
+	read -p "[?] RDP runnig, do you want to close the connection? [Y/N]: " yn
+	case $yn in
+		[YyYESyesYes]* )
+			echo "[-] Killing xfreerdp process";
+			sudo kill -9 $(ps aux | grep xfreerdp | grep -v "color=auto\|grep" | awk -F ' ' '{print $2}');
+			wait $! 2>/dev/null;
+			echo "[-] Killing SSH RDP tunnel process";
+			sudo kill -9 $(ps aux | grep ssh | grep $port | grep -v "color=auto" | awk -F ' ' '{print $2}');
+			wait $! 2>/dev/null;
+			break;;
+		[NnNOnoNo]* ) echo -e "\e[2A";;
+	esac
+done
