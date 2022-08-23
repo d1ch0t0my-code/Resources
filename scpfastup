@@ -11,22 +11,24 @@
 #               code or otherwise passed as arguments.
 ###################################################################
 
-ip=''    # <--- CHANGE THIS
-user=''  # <--- CHANGE THIS
-pass=''  # <--- CHANGE THIS
-key=''   # <--- CHANGE THIS
-lpath='' # <--- CHANGE THIS
-rpath='' # <--- CHANGE THIS
+file=''
+ip='13.38.85.81'
+user='root'
+pass=''
+key='~/Work/Cibersecurity/Cloud/AWS_d1ch0.pem'
+lpath='/home/user/lab/zz_common_files/'
+rpath='/root/'
 verb=false
 
 usage(){
-	echo -e "\n\e[1;39mUsage: \e[0;39mscpfastup [OPTIONS] <FILE_PATH>"
+	echo -e "\n\e[1;39mUsage: \e[0;39mscpfastup [OPTIONS] -f <FILE_PATH>"
 	echo -e "\n\e[1;39mDESCRIPTION:\e[0;39m\n"
 	echo -e "    The connection information and the local and destination paths"
 	echo -e "    must be encoded in the script code.\n"
 	echo -e "    Optionally any or all of the parameters can be defined by the user\n    using the corresponding OPTIONS flag, but this is beyond the scope\n    of the script, the idea is to speed up uploads by hardcoding the\n    connection information in the script.\n"
 	echo -e "    Paths, both local and remote, must defined as absolute paths, of\n    the type \"/home/user/Downloads\e[1;39m/\e[0;39m\", DO NOT use relative paths such\n    as \"~/Downloads/...\"."
 	echo -e "\n\e[1;39mOPTIONS:\e[0;39m\n"
+	echo -e "    -f:  Filename of the file to be uploaded (MANDATORY)"
 	echo -e "    -i:  IP of the remote machine."
 	echo -e "    -u:  Specifies the username."
 	echo -e "    -p:  Specifies the password."
@@ -40,13 +42,15 @@ usage(){
 
 if [[ "$#" -lt 1 ]]; then usage; fi
 
-echo -e "[\e[1;38;5;196;5m!\e[0;39m]\e[1;33mWARNING\e[0;39m: Remember to delete the hard coded information in the script at the end of its use."
-
-while getopts i:u:p:k:l:r:vh opt; do
+while getopts f:i:u:p:k:l:r:vh opt; do
 	case "${opt}" in
+		f)
+			file=${OPTARG}
+		 ;;
 		i)
 			if [[ ${OPTARG} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
 				ip=${OPTARG}
+				shift 1
 			else
 				echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: \" -i ${OPTARG}\" Is not a valid IP\n[\e[1;38;5;82m*\e[0;39m] End of Execution\n"
 				usage
@@ -80,6 +84,14 @@ while getopts i:u:p:k:l:r:vh opt; do
 	esac
 done
 
+echo -e "[\e[1;38;5;196;5m!\e[0;39m]\e[1;33mWARNING\e[0;39m: Remember to delete the hard coded information in the script at the end of its use."
+
+if [[ $file = '' ]]; then
+	echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: \"-f\" (file upload) option is NOT set\n[\e[1;38;5;82m*\e[0;39m] End of Execution"
+	usage
+	exit
+fi
+
 if [[ user = '' ]] || [[ lpath = '' ]] || [[ rpath = '' ]]; then
 	echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: one of the values of \"user | lpath | rpath\" has not been defined or is not recognised."
 	echo -e "[\e[1;38;5;82m*\e[0;39m] End of Execution\n"
@@ -87,11 +99,11 @@ if [[ user = '' ]] || [[ lpath = '' ]] || [[ rpath = '' ]]; then
 fi
 
 if [[ $key != '' ]]; then
-	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nscp -i $key $lpath$1 $user@$ip:$rpath$1"; fi
-	scp -i $key $lpath$1 $user@$ip:$rpath$1
+	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nscp -i $key \"$lpath$file\" $user@$ip:$rpath$file"; fi
+	scp -i $key "$lpath$file" $user@$ip:"$rpath$file"
 elif [[ $pass != '' ]]; then
-	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nsshpass -p $pass scp $lpath$1 $user@$ip:$rpath$1"; fi
-	sshpass -p $pass scp $lpath$1 $user@$ip:$rpath$1
+	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nsshpass -p $pass scp \"$lpath$file\" $user@$ip:\"$rpath$file\""; fi
+	sshpass -p $pass scp "$lpath$file" $user@$ip:"$rpath$file"
 else
 	echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: No authentication method has been defined."
 	echo -e "[\e[1;38;5;196m!\e[0;39m] Key or Pass must be defined."
