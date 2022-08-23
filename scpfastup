@@ -6,8 +6,9 @@
 # usage       : bash scpfastup [OPTIONS] <FILENAME>
 # Author      : d1ch0t0my
 # Email       : d1ch0t0my@protonmail.com
-# Description : Script fast upload files to the hard coded path in remote
-#				machine, using the hard coded IP and credentials
+# Description : Script for fast file upload to remote computer, using
+#               ip, path and credentials information hardcoded in the
+#               code or otherwise passed as arguments.
 ###################################################################
 
 ip=''    # <--- CHANGE THIS
