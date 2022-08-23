@@ -12,12 +12,12 @@
 ###################################################################
 
 file=''
-ip='13.38.85.81'
-user='root'
-pass=''
-key='~/Work/Cibersecurity/Cloud/AWS_d1ch0.pem'
-lpath='/home/user/lab/zz_common_files/'
-rpath='/root/'
+ip=''    # <--- CHANGE THIS
+user=''  # <--- CHANGE THIS
+pass=''  # <--- CHANGE THIS
+key=''   # <--- CHANGE THIS
+lpath='' # <--- CHANGE THIS
+rpath='' # <--- CHANGE THIS
 verb=false
 
 usage(){
