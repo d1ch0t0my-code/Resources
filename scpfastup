@@ -17,6 +17,7 @@ pass=''  # <--- CHANGE THIS
 key=''   # <--- CHANGE THIS
 lpath='' # <--- CHANGE THIS
 rpath='' # <--- CHANGE THIS
+verb=false
 
 usage(){
 	echo -e "\n\e[1;39mUsage: \e[0;39mscpfastup [OPTIONS] <FILE_PATH>"
@@ -32,15 +33,16 @@ usage(){
 	echo -e "    -k:  Path to the private RSA (overrides the password login option)."
 	echo -e "    -l:  Defines the local path to the folder containing the filesto be\n         uploaded (define as absolute route)."
 	echo -e "    -r:  Defines the remote path to the folder where the uploaded files\n         will be stored (define as absolute route)."
+	echo -e "    -v:  Activates verbosity"
 	echo -e "    -h:  Show this help.\n"
 	exit
 }
 
 if [[ "$#" -lt 1 ]]; then usage; fi
 
-echo -e "\n[\e[1;38;5;196m!\e[0;39m]\e[1;33mWARNING\e[0;39m: Remember to delete the hard coded information in the script at the end of its use.\n"
+echo -e "[\e[1;38;5;196;5m!\e[0;39m]\e[1;33mWARNING\e[0;39m: Remember to delete the hard coded information in the script at the end of its use."
 
-while getopts i:u:p:k:l:r:h opt; do
+while getopts i:u:p:k:l:r:vh opt; do
 	case "${opt}" in
 		i)
 			if [[ ${OPTARG} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
@@ -66,6 +68,9 @@ while getopts i:u:p:k:l:r:h opt; do
 		r)
 			rpath=${OPTARG}
 		 ;;
+		v)
+			verb=true
+		 ;;
 		h)
 			usage
 		 ;;
@@ -82,10 +87,10 @@ if [[ user = '' ]] || [[ lpath = '' ]] || [[ rpath = '' ]]; then
 fi
 
 if [[ $key != '' ]]; then
-	echo -e "[i] COMMAND:\nscp -i $key $lpath$1 $user@$ip:$rpath$1"
+	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nscp -i $key $lpath$1 $user@$ip:$rpath$1"; fi
 	scp -i $key $lpath$1 $user@$ip:$rpath$1
 elif [[ $pass != '' ]]; then
-	echo -e "[i] COMMAND:\nsshpass -p $pass scp $lpath$1 $user@$ip:$rpath$1"
+	if [[ $verb = true ]]; then echo -e "[i] COMMAND:\nsshpass -p $pass scp $lpath$1 $user@$ip:$rpath$1"; fi
 	sshpass -p $pass scp $lpath$1 $user@$ip:$rpath$1
 else
 	echo -e "[\e[1;38;5;196m!\e[0;39m] ERROR: No authentication method has been defined."
