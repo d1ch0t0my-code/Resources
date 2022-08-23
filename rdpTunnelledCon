@@ -7,7 +7,7 @@
 # Author      : d1ch0t0my
 # Email       : d1ch0t0my@protonmail.com
 # Description : Script to connect via RDP, tunnelling the connection via
-#				SSH with RSA key pair authentication, to remote machine
+#               SSH with RSA key pair authentication, to remote machine
 ###################################################################
 
 echo -e "\n\e[1;39m### RDP VIA SSH ###\n\e[0;39m"
